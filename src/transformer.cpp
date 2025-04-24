@@ -2,6 +2,8 @@
 #include <cmath>
 
 #include <Eigen/Dense>
+#include <Eigen/Geometry>
+#include <Eigen/Core>
 
 // 旋转矩阵（3X3）:Eigen::Matrix3d
 // 旋转向量（3X1）:Eigen::AngleAxisd
@@ -71,7 +73,7 @@ void AngleAxisd_test() {
 void EulerAngles_test() {
     /**** 3. 欧拉角 ****/
     std::cout << std::endl << "********** EulerAngle **********" << std::endl;
-    //3.0 初始化欧拉角(Z-Y-X，即RPY, 先绕x轴roll,再绕y轴pitch,最后绕z轴yaw)
+    //3.0 初始化欧拉角(Z-Y-X，即RPY, 按照内旋顺序，即先绕Z轴旋转，再绕Y轴旋转，最后绕X轴旋转)
     Eigen::Vector3d ea(0.785398, -0, 0);
  
     //3.1 欧拉角转换为旋转矩阵
@@ -265,6 +267,112 @@ void Affine3d_test() {
 void Isometry3d_test() {
 
 }
+
+/**********************************数学公式****************************************/
+/**
+ * 内旋和外旋转：
+ * 1.外旋：每次旋转是绕固定轴（一个固定参考系，例如ego坐标系）旋转，称为外旋。
+ * 2.内旋：每次旋转是绕自身旋转之后的轴旋转，称为内旋。
+ * 
+ * 旋转顺序：
+ * 1.对于xyz三个旋转轴，不同的旋转顺序一共有6种组合方式。在实际应用中，通常使用ZYX顺序，即先绕Z轴旋转，再绕Y轴旋转，最后绕X轴旋转。
+ * 2.在旋转角度相同的情况下，不同旋转顺序得到的姿态是不同的。
+ * 
+ * 欧拉角的正负：
+ * 1.欧拉角的正负是相对于右手坐标系而言的，右手坐标系是一个固定的坐标系。
+ * 
+ * 欧拉角的范围：
+ * 1.需要针对具体的坐标系才能定义清楚
+ * 2.Eigen中欧拉角的范围都是[-pi, pi]，即[-180, 180]度。
+ */
+
+/**
+ * 假设绕XYZ三个轴的旋转角度分别为α、β、γ，则欧拉角的旋转矩阵为：
+ * 
+ * Rx(α) = | 1      0         0   |
+ *         | 0   cos(α)   -sin(α) |
+ *         | 0   sin(α)    cos(α) |
+ * 
+ * Ry(β) = | cos(β)   0   sin(β) |
+ *         | 0        1      0   |
+ *         | -sin(β)  0   cos(β) |
+ * 
+ * Rz(γ) = | cos(γ)   -sin(γ)  0 |
+ *         | sin(γ)    cos(γ)  0 |
+ *         | 0        0        1 |
+ * 
+ * 按照内旋方式，ZYX旋转顺序，即先绕Z轴旋转，再绕Y轴旋转，最后绕X轴旋转，则总的旋转矩阵(内旋是右乘)为：
+ * R1 = Rz(γ) * Ry(β) * Rx(α)
+ * 
+ * 按照外旋方式，XYZ旋转顺序，即先绕X轴旋转，再绕Y轴旋转，最后绕Z轴旋转，则总的旋转矩阵(外旋是左乘)为：
+ * R2 = Rz(γ) * Ry(β) * Rx(α)
+ * 
+ * 上述得R1==R2，即ZYX顺序的内旋和XYZ顺序的外旋是等价的(仅适用文中所提的旋转顺序)。
+ */
+
+/**
+ * @brief 探讨实际使用中的欧拉角、旋转矩阵、四元数之间的转换
+ */
+void Euler2AngleAxisd2Quaterniond() {
+  double euler_angle_z = 30.0; // 30度
+  double euler_angle_y = 45.0; // 45度
+  double euler_angle_x = 60.0; // 60度
+
+  Eigen::AngleAxisd angle_axis_z(M_PI / 180.0 * euler_angle_z, Eigen::Vector3d::UnitZ());
+  Eigen::AngleAxisd angle_axis_y(M_PI / 180.0 * euler_angle_y, Eigen::Vector3d::UnitY());
+  Eigen::AngleAxisd angle_axis_x(M_PI / 180.0 * euler_angle_x, Eigen::Vector3d::UnitX());
+  Eigen::Matrix3d rotation_matrix_z = angle_axis_z.toRotationMatrix();
+  Eigen::Matrix3d rotation_matrix_y = angle_axis_y.toRotationMatrix();
+  Eigen::Matrix3d rotation_matrix_x = angle_axis_x.toRotationMatrix();
+  std::cout << "rotation_matrix_z: \n" << rotation_matrix_z << std::endl;
+  std::cout << "rotation_matrix_y: \n" << rotation_matrix_y << std::endl;
+  std::cout << "rotation_matrix_x: \n" << rotation_matrix_x << std::endl;
+
+  // 内旋，按照ZYX顺序，右乘
+  Eigen::Matrix3d rotation_matrix_inner = rotation_matrix_z * rotation_matrix_y * rotation_matrix_x;
+  std::cout << "rotation_matrix_inner: \n" << rotation_matrix_inner << std::endl;
+  // 外旋，按照XYZ顺序，左乘
+  Eigen::Matrix3d rotation_matrix_outer = rotation_matrix_z * rotation_matrix_y * rotation_matrix_x;
+  std::cout << "rotation_matrix_outer: \n" << rotation_matrix_outer << std::endl;
+  // 内选，按照旋转向量的方式
+  Eigen::Matrix3d rotation_matrix_inner_2;
+  rotation_matrix_inner_2 = Eigen::AngleAxisd(M_PI / 180.0 * euler_angle_z, Eigen::Vector3d::UnitZ()) *
+                            Eigen::AngleAxisd(M_PI / 180.0 * euler_angle_y, Eigen::Vector3d::UnitY()) *
+                            Eigen::AngleAxisd(M_PI / 180.0 * euler_angle_x, Eigen::Vector3d::UnitX());
+  std::cout << "rotation_matrix_inner_2: \n" << rotation_matrix_inner_2 << std::endl;
+
+  /**
+   * @brief 旋转矩阵转换为欧拉角
+   * 
+   * 测试结果：
+   * 当z=30度，y=45度，x=60度时，旋转矩阵转换为欧拉角的结果是：z 30 y 45 x 60
+   * 当z=-30度，y=45度，x=60度时，旋转矩阵转换为欧拉角的结果是：z 150 y 135 x -120
+   * 
+   * 直接套用公式计算感觉有点问题
+   */
+  Eigen::Vector3d euler_angles_inner = rotation_matrix_inner.eulerAngles(2, 1, 0);
+  std::cout << "euler_angles_inner: "
+            << " z " << euler_angles_inner.transpose().x() * 180.0 / M_PI
+            << " y " << euler_angles_inner.transpose().y() * 180.0 / M_PI
+            << " x " << euler_angles_inner.transpose().z() * 180.0 / M_PI
+            << std::endl;
+  Eigen::Vector3d euler_angles_inner_2 = rotation_matrix_inner_2.eulerAngles(2, 1, 0);
+  std::cout << "euler_angles_inner_2: "
+            << " z " << euler_angles_inner_2.transpose().x() * 180.0 / M_PI
+            << " y " << euler_angles_inner_2.transpose().y() * 180.0 / M_PI
+            << " x " << euler_angles_inner_2.transpose().z() * 180.0 / M_PI
+            << std::endl;
+
+#if 0
+  // 外旋的旋转矩阵转换为欧拉角。结果异常，因为eigen中提取的是内旋的欧拉角
+  Eigen::Vector3d euler_angles_outer = rotation_matrix_outer.eulerAngles(0, 1, 2);
+  std::cout << "euler_angles_outer: "
+            << " x " << euler_angles_outer.transpose().x() * 180.0 / M_PI
+            << " y " << euler_angles_outer.transpose().y() * 180.0 / M_PI
+            << " z " << euler_angles_outer.transpose().z() * 180.0 / M_PI
+            << std::endl;
+#endif
+}
  
 int main(int argc, char **argv) 
 {
@@ -282,4 +390,8 @@ int main(int argc, char **argv)
   Affine3d_test();
   std::cout << "==================== Isometry3d_test ====================" << std::endl;
   Isometry3d_test();
+  std::cout << "==================== Euler2AngleAxisd2Quaterniond ====================" << std::endl;
+  Euler2AngleAxisd2Quaterniond();
+
+  return 0;
 }
