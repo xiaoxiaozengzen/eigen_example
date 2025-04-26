@@ -301,6 +301,15 @@ void Isometry3d_test() {
  *         | sin(γ)    cos(γ)  0 |
  *         | 0        0        1 |
  * 
+ * Rz(γ) * Ry(β) = | cos(γ)cos(β)   -sin(γ)  cos(γ)sin(β) |
+ *                 | sin(γ)cos(β)    cos(γ)  sin(γ)sin(β) |
+ *                 | -sin(β)          0      cos(β)       |
+ * 
+ * Rz(γ) * Ry(β) * Rx(α) = | cos(γ)cos(β)   -sin(γ)cos(α)+cos(γ)sin(β)sin(α)   sin(γ)sin(α)+cos(γ)sin(β)cos(α) |
+ *                         | sin(γ)cos(β)    cos(γ)cos(α)+sin(γ)sin(β)sin(α)   -cos(γ)sin(α)+sin(γ)sin(β)cos(α)|
+ *                         | -sin(β)         cos(β)sin(α)                      cos(β)cos(α)                    |
+ * 
+ * 
  * 按照内旋方式，ZYX旋转顺序，即先绕Z轴旋转，再绕Y轴旋转，最后绕X轴旋转，则总的旋转矩阵(内旋是右乘)为：
  * R1 = Rz(γ) * Ry(β) * Rx(α)
  * 
@@ -311,13 +320,27 @@ void Isometry3d_test() {
  */
 
 /**
+ * 四元素可以描述物体的旋转，四元素是一个四维向量，通常表示为(qx, qy, qz, qw)，其中qx、qy、qz是旋转轴的坐标，qw是旋转角度。
+ * 四元素本质上是个超复数：quaternion = qw + qx*i + qy*j + qz*k, i^2 = j^2 = k^2 = -1
+ * 
+ * 不同的旋转顺序，欧拉角和四元素之间的转换关系是不同的。以下按照ZYX顺序进行转换：
+ * 假设绕Z轴旋转角度为γ，绕Y轴旋转角度为β，绕X轴旋转角度为α，则四元素的计算公式为：
+ * qz = (cos(γ/2), 0, 0, sin(γ/2))
+ * qy = (cos(β/2), 0, sin(β/2), 0)
+ * qx = (cos(α/2), sin(α/2), 0, 0)
+ * 
+ */
+
+/**
  * @brief 探讨实际使用中的欧拉角、旋转矩阵、四元数之间的转换
  */
 void Euler2AngleAxisd2Quaterniond() {
-  double euler_angle_z = 30.0; // 30度
+  double euler_angle_z = -30.0; // -30度
   double euler_angle_y = 45.0; // 45度
   double euler_angle_x = 60.0; // 60度
 
+  /****************************euler2rotation***********************************/
+  std::cout <<"+++++++++++++++++euler2rotation+++++++++++++++++" << std::endl;
   Eigen::AngleAxisd angle_axis_z(M_PI / 180.0 * euler_angle_z, Eigen::Vector3d::UnitZ());
   Eigen::AngleAxisd angle_axis_y(M_PI / 180.0 * euler_angle_y, Eigen::Vector3d::UnitY());
   Eigen::AngleAxisd angle_axis_x(M_PI / 180.0 * euler_angle_x, Eigen::Vector3d::UnitX());
@@ -341,6 +364,15 @@ void Euler2AngleAxisd2Quaterniond() {
                             Eigen::AngleAxisd(M_PI / 180.0 * euler_angle_x, Eigen::Vector3d::UnitX());
   std::cout << "rotation_matrix_inner_2: \n" << rotation_matrix_inner_2 << std::endl;
 
+  /****************************rotation2euler***********************************/
+  std::cout << "+++++++++++++++++rotation2euler+++++++++++++++++" << std::endl;
+  double angle_z = atan2(rotation_matrix_z(1, 0), rotation_matrix_z(0, 0));
+  std::cout << "angle_z: " << angle_z * 180.0 / M_PI << std::endl;
+  double angle_y = atan2(rotation_matrix_y(0, 2), rotation_matrix_y(2, 2));
+  std::cout << "angle_y: " << angle_y * 180.0 / M_PI << std::endl;
+  double angle_x = atan2(rotation_matrix_x(2, 1), rotation_matrix_x(1, 1));
+  std::cout << "angle_x: " << angle_x * 180.0 / M_PI << std::endl;
+
   /**
    * @brief 旋转矩阵转换为欧拉角
    * 
@@ -363,6 +395,35 @@ void Euler2AngleAxisd2Quaterniond() {
             << " x " << euler_angles_inner_2.transpose().z() * 180.0 / M_PI
             << std::endl;
 
+  /**
+   * @brief 旋转矩阵转换为欧拉角
+   * 
+   * @param rotation_matrix 旋转矩阵
+   * @param axis 旋转轴
+   * @return double 欧拉角
+   */
+  auto GetEulerFromRotationMatrix = [](const Eigen::Matrix3d &rotation_matrix, std::string axis) -> double {
+    double euler_angle = 0.0;
+    if(axis == "z") {
+      // 三角函数公式：tan(θ) = sin(θ) / cos(θ)
+      euler_angle = atan2(rotation_matrix(1, 0), rotation_matrix(0, 0));
+    } else if(axis == "y") {
+      euler_angle = asin(-rotation_matrix(2, 0));
+    } else if(axis == "x") {
+      euler_angle = atan2(rotation_matrix(2, 1), rotation_matrix(2, 2));
+    } else {
+      std::cerr << "Invalid axis: " << axis << std::endl;
+      return 0.0;
+    }
+    return euler_angle * 180.0 / M_PI;
+  };
+  double euler_angle_z_inner = GetEulerFromRotationMatrix(rotation_matrix_inner, "z");
+  std::cout << "euler_angle_z_inner: " << euler_angle_z_inner << std::endl;
+  double euler_angle_y_inner = GetEulerFromRotationMatrix(rotation_matrix_inner, "y");
+  std::cout << "euler_angle_y_inner: " << euler_angle_y_inner << std::endl;
+  double euler_angle_x_inner = GetEulerFromRotationMatrix(rotation_matrix_inner, "x");
+  std::cout << "euler_angle_x_inner: " << euler_angle_x_inner << std::endl;
+
 #if 0
   // 外旋的旋转矩阵转换为欧拉角。结果异常，因为eigen中提取的是内旋的欧拉角
   Eigen::Vector3d euler_angles_outer = rotation_matrix_outer.eulerAngles(0, 1, 2);
@@ -372,6 +433,87 @@ void Euler2AngleAxisd2Quaterniond() {
             << " z " << euler_angles_outer.transpose().z() * 180.0 / M_PI
             << std::endl;
 #endif
+
+  /****************************euler2quaterniond***********************************/
+  std::cout << "+++++++++++++++++euler2quaterniond+++++++++++++++++" << std::endl;
+  Eigen::Quaterniond quaterniond_z(Eigen::AngleAxisd(M_PI / 180.0 * euler_angle_z, Eigen::Vector3d::UnitZ()));
+  std::cout << "quaterniond_z: coeffs= " << quaterniond_z.coeffs().transpose() << std::endl;
+  std::cout << "quaterniond_z: vec= " << quaterniond_z.vec().transpose() << std::endl;
+  std::cout << "quaterniond_z:"
+            <<", w= " << quaterniond_z.w()
+            << " x= " << quaterniond_z.x()
+            << " y= " << quaterniond_z.y()
+            << " z= " << quaterniond_z.z()
+            << std::endl;
+  Eigen::Quaterniond quaterniond_y(Eigen::AngleAxisd(M_PI / 180.0 * euler_angle_y, Eigen::Vector3d::UnitY()));
+  std::cout << "quaterniond_y: coeffs= " << quaterniond_y.coeffs().transpose() << std::endl;
+  Eigen::Quaterniond quaterniond_x(Eigen::AngleAxisd(M_PI / 180.0 * euler_angle_x, Eigen::Vector3d::UnitX()));
+  std::cout << "quaterniond_x: coeffs= " << quaterniond_x.coeffs().transpose() << std::endl;
+
+  Eigen::Quaterniond quaterniond_angle_z(cos(M_PI / 180.0 * euler_angle_z / 2), 0, 0, sin(M_PI / 180.0 * euler_angle_z / 2));
+  std::cout << "quaterniond_angle_z: coeffs= " << quaterniond_angle_z.coeffs().transpose() << std::endl;
+  Eigen::Quaterniond quaterniond_angle_y(cos(M_PI / 180.0 * euler_angle_y / 2), 0, sin(M_PI / 180.0 * euler_angle_y / 2), 0);
+  std::cout << "quaterniond_angle_y: coeffs= " << quaterniond_angle_y.coeffs().transpose() << std::endl;
+  Eigen::Quaterniond quaterniond_angle_x(cos(M_PI / 180.0 * euler_angle_x / 2), sin(M_PI / 180.0 * euler_angle_x / 2), 0, 0);
+  std::cout << "quaterniond_angle_x: coeffs= " << quaterniond_angle_x.coeffs().transpose() << std::endl;
+
+  Eigen::Quaterniond quaterniond_all = quaterniond_z * quaterniond_y * quaterniond_x;
+  std::cout << "quaterniond_all= " << quaterniond_all.coeffs().transpose() << std::endl;
+
+  /********************************quaterniond2euler***********************************/
+  std::cout << "+++++++++++++++++quaterniond2euler+++++++++++++++++" << std::endl;
+  /**
+   * @brief 四元数转换为欧拉角
+   * 
+   * @param quaternion 单一旋转对应的四元数
+   * @param axis 旋转轴
+   * @return double 欧拉角
+   */
+  auto GetEulerFromSingleAxisQuaternion = [](const Eigen::Quaterniond &quaternion, std::string axis) -> double {
+    double euler_angle = 0.0;
+    if(axis == "z") {
+      euler_angle = atan2(quaternion.z(), quaternion.w()) * 2.0;
+    } else if(axis == "y") {
+      euler_angle = atan2(quaternion.y(), quaternion.w()) * 2.0;
+    } else if(axis == "x") {
+      euler_angle = atan2(quaternion.x(), quaternion.w()) * 2.0;
+    } else {
+      std::cerr << "Invalid axis: " << axis << std::endl;
+      return 0.0;
+    }
+    return euler_angle * 180.0 / M_PI;
+  };
+  double euler_angle_z_quaternion = GetEulerFromSingleAxisQuaternion(quaterniond_z, "z");
+  std::cout << "euler_angle_z_quaternion: " << euler_angle_z_quaternion << std::endl;
+  double euler_angle_y_quaternion = GetEulerFromSingleAxisQuaternion(quaterniond_y, "y");
+  std::cout << "euler_angle_y_quaternion: " << euler_angle_y_quaternion << std::endl;
+  double euler_angle_x_quaternion = GetEulerFromSingleAxisQuaternion(quaterniond_x, "x");
+  std::cout << "euler_angle_x_quaternion: " << euler_angle_x_quaternion << std::endl;
+
+  /**
+   * @brief 四元数转换为欧拉角
+   * 
+   * @param quaternion 四元数
+   * @return Eigen::Vector3d 欧拉角
+   */
+  auto GetEulerFromQuaternion = [](const Eigen::Quaterniond &quaternion) -> Eigen::Vector3d {
+    Eigen::Vector3d euler_angle;
+    // 计算欧拉角x
+    euler_angle[0] = atan2(2.0 * (quaternion.y() * quaternion.z() + quaternion.w() * quaternion.x()), 
+                           quaternion.w() * quaternion.w() - quaternion.x() * quaternion.x() - quaternion.y() * quaternion.y() + quaternion.z() * quaternion.z());
+    // 计算欧拉角y
+    euler_angle[1] = asin(-2.0 * (quaternion.x() * quaternion.z() - quaternion.w() * quaternion.y()));
+    // 计算欧拉角z
+    euler_angle[2] = atan2(2.0 * (quaternion.x() * quaternion.y() + quaternion.w() * quaternion.z()), 
+                           quaternion.w() * quaternion.w() + quaternion.x() * quaternion.x() - quaternion.y() * quaternion.y() - quaternion.z() * quaternion.z());
+    return euler_angle;
+  };
+  Eigen::Vector3d euler_angle_quaternion = GetEulerFromQuaternion(quaterniond_all);
+  std::cout << "euler_angle_quaternion: "
+            << "[0]=" << euler_angle_quaternion.transpose().x() * 180.0 / M_PI
+            << ", [1]= " << euler_angle_quaternion.transpose().y() * 180.0 / M_PI
+            << ", [2]=" << euler_angle_quaternion.transpose().z() * 180.0 / M_PI
+            << std::endl;
 }
  
 int main(int argc, char **argv) 
