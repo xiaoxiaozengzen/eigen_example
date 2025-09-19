@@ -3,6 +3,10 @@ project(eigen_example)
 
 set(CMAKE_CXX_STANDARD 14)
 
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
 if(BUILD_DEBUG)
     add_definitions("-g")
 endif()
@@ -32,3 +36,6 @@ target_link_libraries(${PROJECT_NAME}_rfu2ego_exe Eigen3::Eigen)
 add_executable(${PROJECT_NAME}_realusing ${CMAKE_CURRENT_SOURCE_DIR}/src/realusing.cpp)
 target_link_libraries(${PROJECT_NAME}_realusing Eigen3::Eigen ${${nolhmann_json_LIBRARIES}})
 target_include_directories(${PROJECT_NAME}_realusing PRIVATE ${nolhmann_json_INCLUDE_DIRS})
+
+add_executable(${PROJECT_NAME}_affine3d ${CMAKE_CURRENT_SOURCE_DIR}/src/affined.cpp)
+target_link_libraries(${PROJECT_NAME}_affine3d Eigen3::Eigen)

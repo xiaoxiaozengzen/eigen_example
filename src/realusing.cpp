@@ -230,6 +230,95 @@ int GetCamParam() {
     return 0;
 }
 
+/******************************* calCenterPointFromKeyPoint ********************************************** */
+
+enum class ReferencePosition {
+  FrontRight = 0,
+  FrontMiddle = 1,
+  FrontLeft = 2,
+  LeftMiddle = 3,
+  RearLeft = 4,
+  RearMiddle = 5,
+  RearRight = 6,
+  RightMiddle = 7,
+  Center = 8,
+  UNKNOWN = 9,
+  MaxReferencePoint = 10,
+};
+
+void calCenterPointFromKeyPoint(const Eigen::Vector3d& key_point, const Eigen::Vector3d& lwh, const double& yaw_degree, ReferencePosition ref_postion, Eigen::Vector3d* center_point) {
+  Eigen::Vector3d cal_center_point = key_point;
+  Eigen::Vector3d transformer = Eigen::Vector3d(0.0, 0.0, 0.0);
+  switch (ref_postion) {
+    case ReferencePosition::FrontRight:
+      transformer[0] = -lwh[0] / 2;
+      transformer[1] = lwh[1] / 2;
+      transformer[2] = 0.0;
+      break;
+    case ReferencePosition::FrontMiddle:
+      transformer[0] = -lwh[0] / 2;
+      transformer[1] = 0.0;
+      transformer[2] = 0.0;
+      break;
+    case ReferencePosition::FrontLeft:
+      transformer[0] = -lwh[0] / 2;
+      transformer[1] = -lwh[1] / 2;
+      transformer[2] = 0.0;
+      break;
+    case ReferencePosition::LeftMiddle:
+      transformer[0] = 0.0;
+      transformer[1] = -lwh[1] / 2;
+      transformer[2] = 0.0;
+      break;
+    case ReferencePosition::RearLeft:
+      transformer[0] = lwh[0] / 2;
+      transformer[1] = -lwh[1] / 2;
+      transformer[2] = 0.0;
+      break;
+    case ReferencePosition::RearMiddle:
+      transformer[0] = lwh[0] / 2;
+      transformer[1] = 0.0;
+      transformer[2] = 0.0;
+      break;
+    case ReferencePosition::RearRight:
+      transformer[0] = lwh[0] / 2;
+      transformer[1] = lwh[1] / 2;
+      transformer[2] = 0.0;
+      break;
+    case ReferencePosition::RightMiddle:
+      transformer[0] = 0.0;
+      transformer[1] = lwh[1] / 2;
+      transformer[2] = 0.0;
+      break;
+    case ReferencePosition::Center:
+      transformer[0] = 0.0;
+      transformer[1] = 0.0;
+      transformer[2] = 0.0;
+      break;
+    default:
+      break;
+  }
+
+  std::cout << "transformer: " << transformer.transpose() << std::endl;
+  Eigen::Affine3d rotation_matrix;
+  rotation_matrix.translate(transformer);
+  rotation_matrix.rotate(Eigen::AngleAxisd(-yaw_degree * M_PI / 180.0, Eigen::Vector3d::UnitZ()));
+  std::cout << "rotation_matrix: " << std::endl << rotation_matrix.matrix() << std::endl;
+  cal_center_point = rotation_matrix * cal_center_point;
+  *center_point = cal_center_point;
+}
+
+void test_calCenterPointFromKeyPoint() {
+  Eigen::Vector3d key_point(-10.5, -1.0, 0.0);
+  Eigen::Vector3d lwh(4.7, 1.9, 0.0);
+  double yaw_degree = 0.0;
+  ReferencePosition ref_postion = ReferencePosition::FrontRight;
+  Eigen::Vector3d center_point;
+  calCenterPointFromKeyPoint(key_point, lwh, yaw_degree, ref_postion, &center_point);
+  std::cout << "key_point: " << key_point.transpose() << std::endl;
+  std::cout << "center_point: " << center_point.transpose() << std::endl;
+}
+
 int main(int argc, char** argv) {
     Eigen::Matrix4d rfu2ins_matrix;
     GetRfu2Ins(&rfu2ins_matrix);
@@ -253,5 +342,8 @@ int main(int argc, char** argv) {
     std::cout << "ego_point: " << ego_point.transpose() << std::endl;
     std::cout << "=====================CamParam=======================" << std::endl;
     GetCamParam();
+
+    std::cout << "=================calCenterPointFromKeyPoint===================" << std::endl;
+    test_calCenterPointFromKeyPoint();
     return 0;
 }
