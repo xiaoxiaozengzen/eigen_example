@@ -25,18 +25,19 @@ void construct() {
 }
 
 void interface() {
+    // 一定要使用Identity初始化，否则矩阵本身会有随机值，其加上后续的旋转和平移会导致结果错误
     Eigen::Affine3d affine3d = Eigen::Affine3d::Identity();
     std::cout << "affine3d: " << std::endl << affine3d.matrix() << std::endl;
-
-    // 平移
-    Eigen::Vector3d translation_vector(1.0, 2.0, 3.0);
-    affine3d.translate(translation_vector);
-    std::cout << "after translate, affine3d: " << std::endl << affine3d.matrix() << std::endl;
 
     // 旋转
     Eigen::AngleAxisd rotation(M_PI / 4, Eigen::Vector3d::UnitZ());
     affine3d.rotate(rotation);
     std::cout << "after rotate, affine3d: " << std::endl << affine3d.matrix() << std::endl;
+
+    // 平移
+    Eigen::Vector3d translation_vector(1.0, 2.0, 3.0);
+    affine3d.translate(translation_vector);
+    std::cout << "after translate, affine3d: " << std::endl << affine3d.matrix() << std::endl;
 
     // 获取旋转部分
     Eigen::Matrix3d rotation_matrix = affine3d.rotation();

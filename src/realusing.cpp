@@ -300,10 +300,12 @@ void calCenterPointFromKeyPoint(const Eigen::Vector3d& key_point, const Eigen::V
   }
 
   std::cout << "transformer: " << transformer.transpose() << std::endl;
-  Eigen::Affine3d rotation_matrix;
-  rotation_matrix.translate(transformer);
+  Eigen::Affine3d rotation_matrix = Eigen::Affine3d::Identity();
   rotation_matrix.rotate(Eigen::AngleAxisd(-yaw_degree * M_PI / 180.0, Eigen::Vector3d::UnitZ()));
+  rotation_matrix.translate(transformer);
   std::cout << "rotation_matrix: " << std::endl << rotation_matrix.matrix() << std::endl;
+  std::cout << "rotation_matrix translation: " << rotation_matrix.translation().transpose() << std::endl;
+  std::cout << "rotation_matrix rotation: " << std::endl << rotation_matrix.rotation() << std::endl;
   cal_center_point = rotation_matrix * cal_center_point;
   *center_point = cal_center_point;
 }
@@ -311,7 +313,7 @@ void calCenterPointFromKeyPoint(const Eigen::Vector3d& key_point, const Eigen::V
 void test_calCenterPointFromKeyPoint() {
   Eigen::Vector3d key_point(-10.5, -1.0, 0.0);
   Eigen::Vector3d lwh(4.7, 1.9, 0.0);
-  double yaw_degree = 0.0;
+  double yaw_degree = -45.0;
   ReferencePosition ref_postion = ReferencePosition::FrontRight;
   Eigen::Vector3d center_point;
   calCenterPointFromKeyPoint(key_point, lwh, yaw_degree, ref_postion, &center_point);

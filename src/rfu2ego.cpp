@@ -90,21 +90,13 @@ void ego2rfu_test() {
 }
 
 /**
- * @brief Eigen中的旋转角度的正负测试
- * @note 右手定则，逆时针为正，顺时针为负
- * @note 旋转是指的坐标系的旋转，而不是点的旋转
- * @note 平移是指的坐标系的平移，而不是点的平移
- * @note 旋转和平移的顺序是先旋转后平移
- * @note 先旋转后平移：先绕原点旋转，再平移到新位置，常见于坐标变换。p' = R * p + t
- * @note 先平移后旋转：先平移到新位置，再绕原点旋转，常见于物体运动。p' = R * (p + t)
+ * @brief 变换矩阵
+ * @note 点旋转：旋转前后还是同一个坐标系，产生新的点坐标
+ * @note 坐标系旋转：点不变，坐标系变了，点在新坐标系下的坐标
  * 
  */
-void rotation_test() {
+void transform_matrix_test() {
     Eigen::Vector3d ori_point(1, 1, 0);
-    /**
-     * 逆时针旋转90度，相当于将ego的坐标上的点逆时针旋转90度，就得到rfu的坐标
-     * @note 例如：ego坐标系下的点(1, 0，0)，逆时针旋转90度后变为(0, 1, 0)，即rfu坐标系下的点
-     */
     double rotation_angle = 90.0;
     Eigen::AngleAxisd rotation_vector(rotation_angle * M_PI / 180.0, Eigen::Vector3d::UnitZ());
     Eigen::Matrix3d rotation_matrix = rotation_vector.toRotationMatrix();
@@ -120,8 +112,8 @@ int main() {
     ego2rfu();
     std::cout << "========================= ego2rfu_test ========================" << std::endl;
     ego2rfu_test();
-    std::cout << "========================= rotation_test ========================" << std::endl;
-    rotation_test();
+    std::cout << "========================= transform_matrix_test ========================" << std::endl;
+    transform_matrix_test();
 
     return 0;
 }
