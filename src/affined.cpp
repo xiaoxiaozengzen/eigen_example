@@ -29,15 +29,15 @@ void interface() {
     Eigen::Affine3d affine3d = Eigen::Affine3d::Identity();
     std::cout << "affine3d: " << std::endl << affine3d.matrix() << std::endl;
 
+    // 平移：需要先设置平移部分，再进行旋转，否则会导致旋转后平移部分不正确
+    Eigen::Vector3d translation_vector(1.0, 2.0, 3.0);
+    affine3d.translate(translation_vector);
+    std::cout << "after translate, affine3d: " << std::endl << affine3d.matrix() << std::endl;
+
     // 旋转
     Eigen::AngleAxisd rotation(M_PI / 4, Eigen::Vector3d::UnitZ());
     affine3d.rotate(rotation);
     std::cout << "after rotate, affine3d: " << std::endl << affine3d.matrix() << std::endl;
-
-    // 平移
-    Eigen::Vector3d translation_vector(1.0, 2.0, 3.0);
-    affine3d.translate(translation_vector);
-    std::cout << "after translate, affine3d: " << std::endl << affine3d.matrix() << std::endl;
 
     // 获取旋转部分
     Eigen::Matrix3d rotation_matrix = affine3d.rotation();
@@ -57,6 +57,11 @@ void interface() {
     Eigen::Vector3d point(1.0, 1.0, 1.0);
     Eigen::Vector3d transformed_point = affine3d * point;
     std::cout << "transformed_point: " << transformed_point.transpose() << std::endl;
+
+    // 直接使用平移和旋转构造
+    Eigen::Translation3d translation_2(translation_vector);
+    Eigen::Affine3d affine3d_2 = translation_2 * rotation_matrix;
+    std::cout << "affine3d_2: " << std::endl << affine3d_2.matrix() << std::endl;
 }
 
 int main() {

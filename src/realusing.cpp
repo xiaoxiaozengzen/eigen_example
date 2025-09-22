@@ -248,77 +248,137 @@ enum class ReferencePosition {
 
 void calCenterPointFromKeyPoint(const Eigen::Vector3d& key_point, const Eigen::Vector3d& lwh, const double& yaw_degree, ReferencePosition ref_postion, Eigen::Vector3d* center_point) {
   Eigen::Vector3d cal_center_point = key_point;
-  Eigen::Vector3d transformer = Eigen::Vector3d(0.0, 0.0, 0.0);
+  
+  /**
+   * @brief 计算车辆8个顶点坐标
+   * 
+   */
+  // 目标框的底部和顶部z坐标
+  double bottom = 0.0;
+  double up = lwh[2];
+  // 基于参考点位置，得到其到目标框的front, rear, left, right的偏移量
+  double front = 0.0;
+  double rear = 0.0;
+  double left = 0.0;
+  double right = 0.0;
   switch (ref_postion) {
     case ReferencePosition::FrontRight:
-      transformer[0] = -lwh[0] / 2;
-      transformer[1] = lwh[1] / 2;
-      transformer[2] = 0.0;
+      front = 0.0;
+      rear = -lwh[0];
+      left = lwh[1];
+      right = 0.0;
       break;
     case ReferencePosition::FrontMiddle:
-      transformer[0] = -lwh[0] / 2;
-      transformer[1] = 0.0;
-      transformer[2] = 0.0;
+      front = 0.0;
+      rear = -lwh[0];
+      left = lwh[1] / 2;
+      right = -lwh[1] / 2;
       break;
     case ReferencePosition::FrontLeft:
-      transformer[0] = -lwh[0] / 2;
-      transformer[1] = -lwh[1] / 2;
-      transformer[2] = 0.0;
+      front = 0.0;
+      rear = -lwh[0];
+      left = 0.0;
+      right = -lwh[1];
       break;
     case ReferencePosition::LeftMiddle:
-      transformer[0] = 0.0;
-      transformer[1] = -lwh[1] / 2;
-      transformer[2] = 0.0;
+      front = lwh[0] / 2;
+      rear = -lwh[0] / 2;
+      left = 0.0;
+      right = -lwh[1];
       break;
     case ReferencePosition::RearLeft:
-      transformer[0] = lwh[0] / 2;
-      transformer[1] = -lwh[1] / 2;
-      transformer[2] = 0.0;
+      front = lwh[0];
+      rear = 0.0;
+      left = 0.0;
+      right = -lwh[1];
       break;
     case ReferencePosition::RearMiddle:
-      transformer[0] = lwh[0] / 2;
-      transformer[1] = 0.0;
-      transformer[2] = 0.0;
+      front = lwh[0];
+      rear = 0.0;
+      left = lwh[1] / 2;
+      right = -lwh[1] / 2;
       break;
     case ReferencePosition::RearRight:
-      transformer[0] = lwh[0] / 2;
-      transformer[1] = lwh[1] / 2;
-      transformer[2] = 0.0;
+      front = lwh[0];
+      rear = 0.0;
+      left = lwh[1];
+      right = 0.0;
       break;
     case ReferencePosition::RightMiddle:
-      transformer[0] = 0.0;
-      transformer[1] = lwh[1] / 2;
-      transformer[2] = 0.0;
+      front = lwh[0] / 2;
+      rear = -lwh[0] / 2;
+      left = lwh[1];
+      right = 0.0;
       break;
     case ReferencePosition::Center:
-      transformer[0] = 0.0;
-      transformer[1] = 0.0;
-      transformer[2] = 0.0;
+      front = lwh[0] / 2;
+      rear = -lwh[0] / 2;
+      left = lwh[1] / 2;
+      right = -lwh[1] / 2;
       break;
     default:
       break;
   }
 
-  std::cout << "transformer: " << transformer.transpose() << std::endl;
+  Eigen::MatrixXd cube(8, 3);
+  cube << front, left, bottom,
+          front, right, bottom,
+          rear, right, bottom,
+          rear, left, bottom,
+          front, left, up,
+          front, right, up,
+          rear, right, up,
+          rear, left, up;
+
   Eigen::Affine3d rotation_matrix = Eigen::Affine3d::Identity();
-  rotation_matrix.rotate(Eigen::AngleAxisd(-yaw_degree * M_PI / 180.0, Eigen::Vector3d::UnitZ()));
-  rotation_matrix.translate(transformer);
-  std::cout << "rotation_matrix: " << std::endl << rotation_matrix.matrix() << std::endl;
-  std::cout << "rotation_matrix translation: " << rotation_matrix.translation().transpose() << std::endl;
-  std::cout << "rotation_matrix rotation: " << std::endl << rotation_matrix.rotation() << std::endl;
-  cal_center_point = rotation_matrix * cal_center_point;
+  Eigen::Vector3d transform_matrix(key_point.x(), key_point.y(), key_point.z());
+  rotation_matrix.translate(transform_matrix);
+  rotation_matrix.rotate(Eigen::AngleAxisd(yaw_degree * M_PI / 180.0, Eigen::Vector3d::UnitZ()));
+  Eigen::MatrixXd rotated_cube = cube * rotation_matrix.rotation();
+  rotated_cube.rowwise() += transform_matrix.transpose();
+
+  // std::cout << "cube: " << std::endl << cube << std::endl;
+  // std::cout << "rotated_cube: " << std::endl << rotated_cube << std::endl;
+
+  // std::cout << "rotation_matrix: " << std::endl << rotation_matrix.matrix() << std::endl;
+  // std::cout << "rotation_matrix translation: " << rotation_matrix.translation().transpose() << std::endl;
+  // std::cout << "rotation_matrix rotation: " << std::endl << rotation_matrix.rotation() << std::endl;
+
+  cal_center_point[0] = (rotated_cube(0, 0) + rotated_cube(6, 0)) / 2.0;
+  cal_center_point[1] = (rotated_cube(0, 1) + rotated_cube(6, 1)) / 2.0;
+  cal_center_point[2] = (rotated_cube(0, 2) + rotated_cube(6, 2)) / 2.0;
+  
   *center_point = cal_center_point;
 }
 
 void test_calCenterPointFromKeyPoint() {
-  Eigen::Vector3d key_point(-10.5, -1.0, 0.0);
-  Eigen::Vector3d lwh(4.7, 1.9, 0.0);
-  double yaw_degree = -45.0;
-  ReferencePosition ref_postion = ReferencePosition::FrontRight;
-  Eigen::Vector3d center_point;
-  calCenterPointFromKeyPoint(key_point, lwh, yaw_degree, ref_postion, &center_point);
+  Eigen::Vector3d key_point(10, -1.0, 0.0);
+  Eigen::Vector3d lwh(2.0, 2.0, 0.0);
   std::cout << "key_point: " << key_point.transpose() << std::endl;
-  std::cout << "center_point: " << center_point.transpose() << std::endl;
+  // test 1
+  double yaw_degree_1 = 0.0;
+  Eigen::Vector3d center_point_1;
+  ReferencePosition ref_postion_1 = ReferencePosition::RearLeft;
+  calCenterPointFromKeyPoint(key_point, lwh, yaw_degree_1, ref_postion_1, &center_point_1);
+  std::cout << "center_point_1: " << center_point_1.transpose() << std::endl;
+  // test 2
+  double yaw_degree_2 = 45.0;
+  Eigen::Vector3d center_point_2;
+  ReferencePosition ref_postion_2 = ReferencePosition::FrontLeft;
+  calCenterPointFromKeyPoint(key_point, lwh, yaw_degree_2, ref_postion_2, &center_point_2);
+  std::cout << "center_point_2: " << center_point_2.transpose() << std::endl;
+  // test 3
+  double yaw_degree_3 = 45.0;
+  Eigen::Vector3d center_point_3;
+  ReferencePosition ref_postion_3 = ReferencePosition::Center;
+  calCenterPointFromKeyPoint(key_point, lwh, yaw_degree_3, ref_postion_3, &center_point_3);
+  std::cout << "center_point_3: " << center_point_3.transpose() << std::endl;
+  // test 4
+  double yaw_degree_4 = 45.0;
+  Eigen::Vector3d center_point_4;
+  ReferencePosition ref_postion_4 = ReferencePosition::RearLeft;
+  calCenterPointFromKeyPoint(key_point, lwh, yaw_degree_4, ref_postion_4, &center_point_4);
+  std::cout << "center_point_4: " << center_point_4.transpose() << std::endl;
 }
 
 int main(int argc, char** argv) {

@@ -211,6 +211,19 @@ void Math() {
     double alpha = 0.5;
     Eigen::VectorXd v6 = (1 - alpha) * v4 + alpha * v5;
     std::cout << "v6: \n" << v6 << std::endl;
+    // rowwise：返回一个行迭代器，可以对每一行进行操作
+    Eigen::MatrixXd m12(2, 3);
+    m12 << 1, 2, 3,
+           4, 5, 6;
+    Eigen::VectorXd v7(3);
+    v7 << 10, 20, 30;
+    Eigen::MatrixXd m13 = m12.rowwise() + v7.transpose(); // 每一行加 v
+    std::cout << "m13: \n" << m13 << std::endl;
+    // colwise：返回一个列迭代器，可以对每一列进行操作
+    Eigen::VectorXd v8(2);
+    v8 << 10, 20;
+    Eigen::MatrixXd m14 = m12.colwise() + v8; // 每一列加 v
+    std::cout << "m14: \n" << m14 << std::endl;
 }
 
 /**

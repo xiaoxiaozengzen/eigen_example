@@ -93,6 +93,9 @@ void ego2rfu_test() {
  * @brief 变换矩阵
  * @note 点旋转：旋转前后还是同一个坐标系，产生新的点坐标
  * @note 坐标系旋转：点不变，坐标系变了，点在新坐标系下的坐标
+ *
+ * @note 先旋转后平移： new_point = R * point + t，先绕原点旋转，再平移，适用于大多数的刚体变换，平移量不受旋转影响
+ * @note 先平移后旋转： new_point = R * (point + t)，先平移，再绕新原点旋转，适用于坐标系变换，平移量会被旋转影响
  * 
  */
 void transform_matrix_test() {
