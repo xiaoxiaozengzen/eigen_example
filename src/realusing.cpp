@@ -334,15 +334,8 @@ void calCenterPointFromKeyPoint(const Eigen::Vector3d& key_point, const Eigen::V
   Eigen::Vector3d transform_matrix(key_point.x(), key_point.y(), key_point.z());
   rotation_matrix.translate(transform_matrix);
   rotation_matrix.rotate(Eigen::AngleAxisd(yaw_degree * M_PI / 180.0, Eigen::Vector3d::UnitZ()));
-  Eigen::MatrixXd rotated_cube = cube * rotation_matrix.rotation();
+  Eigen::MatrixXd rotated_cube = (rotation_matrix.rotation() * cube.transpose()).transpose();
   rotated_cube.rowwise() += transform_matrix.transpose();
-
-  // std::cout << "cube: " << std::endl << cube << std::endl;
-  // std::cout << "rotated_cube: " << std::endl << rotated_cube << std::endl;
-
-  // std::cout << "rotation_matrix: " << std::endl << rotation_matrix.matrix() << std::endl;
-  // std::cout << "rotation_matrix translation: " << rotation_matrix.translation().transpose() << std::endl;
-  // std::cout << "rotation_matrix rotation: " << std::endl << rotation_matrix.rotation() << std::endl;
 
   cal_center_point[0] = (rotated_cube(0, 0) + rotated_cube(6, 0)) / 2.0;
   cal_center_point[1] = (rotated_cube(0, 1) + rotated_cube(6, 1)) / 2.0;
