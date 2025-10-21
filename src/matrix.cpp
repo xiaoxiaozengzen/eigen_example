@@ -100,6 +100,17 @@ void Access() {
     v1.x() = 10;
     std::cout << "v1: " << v1 << std::endl;
 
+    Eigen::Vector2d v2 = v1.head<2>();
+    std::cout << "v2: " << v2 << std::endl;
+    Eigen::Vector2d v3 = v1.head(2);
+    std::cout << "v3: " << v3 << std::endl;
+    Eigen::Vector2d v4 = v1.tail<2>();
+    std::cout << "v4: " << v4 << std::endl;
+    Eigen::Vector2d v5 = v1.segment(1, 2);
+    std::cout << "v5: " << v5 << std::endl;
+    Eigen::VectorXd v6 = v1.segment<2>(1);
+    std::cout << "v6: " << v6 << std::endl;
+
     // 二维
     Eigen::MatrixXd m1(2, 3);
     m1 << 1, 2, 3,
