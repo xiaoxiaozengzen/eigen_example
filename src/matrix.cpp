@@ -1,4 +1,6 @@
 #include <iostream>
+#include <vector>
+
 #include <Eigen/Dense>
 
 // typedef Matrix<Scalar, RowsAtCompileTime, ColsAtCompileTime, Options> MyMatrixType;
@@ -99,17 +101,6 @@ void Access() {
     std::cout << "ret: " << ret << std::endl;
     v1.x() = 10;
     std::cout << "v1: " << v1 << std::endl;
-
-    Eigen::Vector2d v2 = v1.head<2>();
-    std::cout << "v2: " << v2 << std::endl;
-    Eigen::Vector2d v3 = v1.head(2);
-    std::cout << "v3: " << v3 << std::endl;
-    Eigen::Vector2d v4 = v1.tail<2>();
-    std::cout << "v4: " << v4 << std::endl;
-    Eigen::Vector2d v5 = v1.segment(1, 2);
-    std::cout << "v5: " << v5 << std::endl;
-    Eigen::VectorXd v6 = v1.segment<2>(1);
-    std::cout << "v6: " << v6 << std::endl;
 
     // 二维
     Eigen::MatrixXd m1(2, 3);
@@ -266,6 +257,49 @@ void Block() {
           0, 0;
     m5.block<3, 2>(0, 0) = m6;
     std::cout << "m5: \n" << m5 << std::endl;
+
+    // 获取第n列
+    Eigen::VectorXd v1 = m1.col(2);
+    std::cout << "v1: \n" << v1 << std::endl;
+    // 获取第n行
+    Eigen::VectorXd v1_2 = m1.row(1);
+    std::cout << "v1_2: \n" << v1_2 << std::endl;
+
+    // 向量取块
+    Eigen::Vector2d v2 = v1.head<2>();
+    std::cout << "v2: " << v2.transpose() << std::endl;
+    Eigen::Vector2d v3 = v1.head(2);
+    std::cout << "v3: " << v3.transpose() << std::endl;
+    Eigen::Vector2d v4 = v1.tail<2>();
+    std::cout << "v4: " << v4.transpose() << std::endl;
+    Eigen::Vector2d v5 = v1.segment(1, 2);
+    std::cout << "v5: " << v5.transpose() << std::endl;
+    Eigen::VectorXd v6 = v1.segment<2>(1);
+    std::cout << "v6: " << v6.transpose() << std::endl;
+}
+
+/**
+ * @brief 切片与索引
+ * @note 切片和索引都依赖于operator()，该运算符接收{seq}序列，还可以接收std::vector<int>，std::array<int, N>和Eigen::ArrayXi等序列。
+ */
+void slice_and_index() {
+    Eigen::MatrixXd m1(4, 4);
+    m1 << 1, 2, 3, 4,
+          5, 6, 7, 8,
+          9, 10, 11, 12,
+          13, 14, 15, 16;
+    // 切片
+    Eigen::MatrixXd m2 = m1(Eigen::seq(1, 2), Eigen::seq(0, 2)); // 行1-2，列0-2
+    std::cout << "m2: \n" << m2 << std::endl;
+    Eigen::MatrixXd m3 = m1(Eigen::seq(0, 3, 2), Eigen::seq(0, 3, 2)); //行0到3，步长2；列0到3，步长2
+    std::cout << "m3: \n" << m3 << std::endl;
+    Eigen::MatrixXd m4 = m1(Eigen::all, Eigen::seq(1, 2)); // 所有行，列1-2
+    // 索引
+    std::vector<int> row_indices = {0, 2};
+    std::vector<int> col_indices = {1, 3};
+    Eigen::MatrixXd m5 = m1(row_indices, col_indices); // 行0、2，列1、3
+    std::cout << "m5: \n" << m5 << std::endl;
+
 }
 
 int main()
@@ -284,5 +318,7 @@ int main()
     Math();
     std::cout << "================Block================" << std::endl;
     Block();
+    std::cout << "================slice_and_index================" << std::endl;
+    slice_and_index();
     return 0;
 }
