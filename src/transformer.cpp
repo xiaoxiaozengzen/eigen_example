@@ -146,6 +146,10 @@ void RotationMatrix_test() {
     std::cout << "quaternion2_1 y: " << quaternion2_1.y() << std::endl;
     std::cout << "quaternion2_1 z: " << quaternion2_1.z() << std::endl;
     std::cout << "quaternion2_1 w: " << quaternion2_1.w() << std::endl;
+#if 0
+    // 错误示范：AngleAxis或者Matrix对应的四元素构造函数是explicit的，不能隐式转换
+    Eigen::Quaterniond quaternion2_2 = rotation_matrix2;
+#endif
 }
 
 /**
