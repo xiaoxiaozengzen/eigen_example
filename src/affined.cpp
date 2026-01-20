@@ -64,11 +64,40 @@ void interface() {
     std::cout << "affine3d_2: " << std::endl << affine3d_2.matrix() << std::endl;
 }
 
+void quaternion_example() {
+    Eigen::Vector3d data(1, 2, 3);
+    Eigen::Quaterniond quaternion(Eigen::AngleAxisd(M_PI / 2, Eigen::Vector3d::UnitZ()));
+    Eigen::Vector3d rotated_data = quaternion * data;
+    std::cout << "rotated_data: " << rotated_data.transpose() << std::endl;
+
+    std::cout << "quaternion x y z w: " << quaternion.x() << " " << quaternion.y() << " " << quaternion.z() << " " << quaternion.w() << std::endl;
+    Eigen::Quaternion<int> q_int = quaternion.cast<int>();
+    std::cout << "q_int x y z w: " << q_int.x() << " " << q_int.y() << " " << q_int.z() << " " << q_int.w() << std::endl;
+
+}
+
+/**
+ * template<Sclar, int Dim>
+ * Eigen::Translation<Sclar, Dim>
+ */
+void Translation_example() {
+    Eigen::Vector3d data(1, 2, 3);
+    Eigen::Translation3d translation(Eigen::Vector3d(10, 20, 30));
+    Eigen::Vector3d translated_data = translation * data;
+    std::cout << "translated_data: " << translated_data.transpose() << std::endl;
+
+    Eigen::Translation<float, 3> translation_float = translation.cast<float>();
+}
+
 int main() {
     std::cout << "================= construct ===================" << std::endl;
     construct();
     std::cout << "================= interface ===================" << std::endl;
     interface();
+    std::cout << "================= quaternion_example ===================" << std::endl;
+    quaternion_example();
+    std::cout << "================= Translation_example ===================" << std::endl;
+    Translation_example();
 
     return 0;
 }
