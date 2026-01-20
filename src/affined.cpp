@@ -85,6 +85,8 @@ void Translation_example() {
     Eigen::Translation3d translation(Eigen::Vector3d(10, 20, 30));
     Eigen::Vector3d translated_data = translation * data;
     std::cout << "translated_data: " << translated_data.transpose() << std::endl;
+    std::cout << "translation x y z: " << translation.x() << " " << translation.y() << " " << translation.z() << std::endl;
+    std::cout << "translation.vector: " << translation.vector().x() << " " << translation.vector().y() << " " << translation.vector().z() << std::endl;
 
     Eigen::Translation<float, 3> translation_float = translation.cast<float>();
 }
