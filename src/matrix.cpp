@@ -92,6 +92,8 @@ void Access() {
     // 一维
     Eigen::VectorXd v1(3);
     v1 << 1, 2, 3;
+    Eigen::Vector<double, 5> v2;
+    v2 << 1, 2, 3, 4, 5;
 
     double ret = v1(1);
     std::cout << "ret: " << ret << std::endl;
@@ -101,6 +103,14 @@ void Access() {
     std::cout << "ret: " << ret << std::endl;
     v1.x() = 10;
     std::cout << "v1: " << v1 << std::endl;
+    std::cout << "v2.x(): " << v2.x()
+              << ", v2.y(): " << v2.y()
+              << ", v2.z(): " << v2.z()
+              << ", v2[3]: " << v2[3]
+              << ", v2[4]: " << v2[4]
+              << std::endl;
+    double ret2 = v2.coeff(2);
+    std::cout << "ret2: " << ret2 << std::endl;
 
     // 二维
     Eigen::MatrixXd m1(2, 3);
@@ -109,6 +119,8 @@ void Access() {
     m1(1, 1) = 10;
     std::cout << "m1: \n" << m1 << std::endl;
     ret = m1(0, 1);
+    std::cout << "ret: " << ret << std::endl;
+    ret = m1.coeff(1, 2);
     std::cout << "ret: " << ret << std::endl;
 }
 
