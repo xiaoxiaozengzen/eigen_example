@@ -35,7 +35,7 @@ void AngleAxisd_test() {
     Eigen::Vector3d axis = rotation_vector1.axis();
     std::cout << "rotation_vector1.axis = " << axis.transpose() << std::endl;
  
-    //1.1 旋转向量转换为旋转矩阵
+    /*1.1 旋转向量转换为旋转矩阵*/
     //旋转向量用matrix()转换成旋转矩阵
     Eigen::Matrix3d rotation_matrix1 = Eigen::Matrix3d::Identity();
     rotation_matrix1 = rotation_vector1.matrix();
@@ -116,7 +116,6 @@ void RotationMatrix_test() {
     //2.0 旋转矩阵初始化
     Eigen::Matrix3d rotation_matrix2;
     rotation_matrix2 << 0.707107, -0.707107, 0, 0.707107, 0.707107, 0, 0, 0, 1;
-
     //或直接单位矩阵初始化
     Eigen::Matrix3d rotation_matrix2_1 = Eigen::Matrix3d::Identity();
  
@@ -316,6 +315,9 @@ void Isometry3d_test() {
  * Rz(γ) * Ry(β) * Rx(α) = | cos(γ)cos(β)   -sin(γ)cos(α)+cos(γ)sin(β)sin(α)   sin(γ)sin(α)+cos(γ)sin(β)cos(α) |
  *                         | sin(γ)cos(β)    cos(γ)cos(α)+sin(γ)sin(β)sin(α)   -cos(γ)sin(α)+sin(γ)sin(β)cos(α)|
  *                         | -sin(β)         cos(β)sin(α)                      cos(β)cos(α)                    |
+ * γ = atan2(R(1, 0), R(0, 0))
+ * β = asin(-R(2, 0))
+ * α = atan2(R(2, 1), R(2, 2))   
  * 
  * 
  * 按照内旋方式，ZYX旋转顺序，即先绕Z轴旋转，再绕Y轴旋转，最后绕X轴旋转，则总的旋转矩阵(内旋是右乘)为：
@@ -336,6 +338,10 @@ void Isometry3d_test() {
  * qz = (cos(γ/2), 0, 0, sin(γ/2))
  * qy = (cos(β/2), 0, sin(β/2), 0)
  * qx = (cos(α/2), sin(α/2), 0, 0)
+ *
+ * γ = yaw = atan2(2*(qw*qz + qx*qy), 1 - 2*(qy^2 + qz^2))
+ * β = pitch = asin(2*(qw*qy - qz*qx))
+ * α = roll = atan2(2*(qw*qx + qy*qz), 1 - 2*(qx^2 + qy^2))
  * 
  */
 
@@ -343,9 +349,12 @@ void Isometry3d_test() {
  * @brief 探讨实际使用中的欧拉角、旋转矩阵、四元数之间的转换
  */
 void Euler2AngleAxisd2Quaterniond() {
-  double euler_angle_z = -30.0; // -30度
-  double euler_angle_y = 45.0; // 45度
-  double euler_angle_x = 60.0; // 60度
+  double euler_angle_z = -30.0; // -30度，yaw
+  double euler_angle_y = 45.0; // 45度，pitch
+  double euler_angle_x = 60.0; // 60度，roll
+  std::cout << "euler_angle_z: " << euler_angle_z << std::endl;
+  std::cout << "euler_angle_y: " << euler_angle_y << std::endl;
+  std::cout << "euler_angle_x: " << euler_angle_x << std::endl;
 
   /****************************euler2rotation***********************************/
   std::cout <<"+++++++++++++++++euler2rotation+++++++++++++++++" << std::endl;
@@ -380,6 +389,12 @@ void Euler2AngleAxisd2Quaterniond() {
   std::cout << "angle_y: " << angle_y * 180.0 / M_PI << std::endl;
   double angle_x = atan2(rotation_matrix_x(2, 1), rotation_matrix_x(1, 1));
   std::cout << "angle_x: " << angle_x * 180.0 / M_PI << std::endl;
+  double angle_z_yaw = atan2(rotation_matrix_inner_2(1, 0), rotation_matrix_inner_2(0, 0));
+  std::cout << "angle_z_yaw: " << angle_z_yaw * 180.0 / M_PI << std::endl;
+  double angle_y_pitch = asin(-rotation_matrix_inner_2(2, 0));
+  std::cout << "angle_y_pitch: " << angle_y_pitch * 180.0 / M_PI << std::endl;
+  double angle_x_roll = atan2(rotation_matrix_inner_2(2, 1), rotation_matrix_inner_2(2, 2));
+  std::cout << "angle_x_roll: " << angle_x_roll * 180.0 / M_PI << std::endl;
 
   /**
    * @brief 旋转矩阵转换为欧拉角
@@ -467,6 +482,11 @@ void Euler2AngleAxisd2Quaterniond() {
 
   Eigen::Quaterniond quaterniond_all = quaterniond_z * quaterniond_y * quaterniond_x;
   std::cout << "quaterniond_all= " << quaterniond_all.coeffs().transpose() << std::endl;
+  Eigen::Quaterniond quaterniond_with_angleaxis =
+      Eigen::AngleAxisd(M_PI / 180.0 * euler_angle_z, Eigen::Vector3d::UnitZ()) *
+      Eigen::AngleAxisd(M_PI / 180.0 * euler_angle_y, Eigen::Vector3d::UnitY()) *
+      Eigen::AngleAxisd(M_PI / 180.0 * euler_angle_x, Eigen::Vector3d::UnitX());
+  std::cout << "quaterniond_with_angleaxis= " << quaterniond_with_angleaxis.coeffs().transpose() << std::endl;
 
   /********************************quaterniond2euler***********************************/
   std::cout << "+++++++++++++++++quaterniond2euler+++++++++++++++++" << std::endl;
@@ -518,9 +538,9 @@ void Euler2AngleAxisd2Quaterniond() {
   };
   Eigen::Vector3d euler_angle_quaternion = GetEulerFromQuaternion(quaterniond_all);
   std::cout << "euler_angle_quaternion: "
-            << "[0]=" << euler_angle_quaternion.transpose().x() * 180.0 / M_PI
-            << ", [1]= " << euler_angle_quaternion.transpose().y() * 180.0 / M_PI
-            << ", [2]=" << euler_angle_quaternion.transpose().z() * 180.0 / M_PI
+            << "x = [0] =" << euler_angle_quaternion.transpose().x() * 180.0 / M_PI
+            << ", y = [1] = " << euler_angle_quaternion.transpose().y() * 180.0 / M_PI
+            << ", z = [2] = " << euler_angle_quaternion.transpose().z() * 180.0 / M_PI
             << std::endl;
 }
  
