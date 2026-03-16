@@ -33,9 +33,12 @@ target_link_libraries(${PROJECT_NAME}_transformer_exe Eigen3::Eigen)
 add_executable(${PROJECT_NAME}_rfu2ego_exe ${CMAKE_CURRENT_SOURCE_DIR}/src/rfu2ego.cpp)
 target_link_libraries(${PROJECT_NAME}_rfu2ego_exe Eigen3::Eigen)
 
-add_executable(${PROJECT_NAME}_realusing ${CMAKE_CURRENT_SOURCE_DIR}/src/realusing.cpp)
-target_link_libraries(${PROJECT_NAME}_realusing Eigen3::Eigen ${${nolhmann_json_LIBRARIES}})
-target_include_directories(${PROJECT_NAME}_realusing PRIVATE ${nolhmann_json_INCLUDE_DIRS})
+add_executable(${PROJECT_NAME}_realusing_exe ${CMAKE_CURRENT_SOURCE_DIR}/src/realusing.cpp)
+target_link_libraries(${PROJECT_NAME}_realusing_exe Eigen3::Eigen ${${nolhmann_json_LIBRARIES}})
+target_include_directories(${PROJECT_NAME}_realusing_exe PRIVATE ${nolhmann_json_INCLUDE_DIRS})
 
-add_executable(${PROJECT_NAME}_affine3d ${CMAKE_CURRENT_SOURCE_DIR}/src/affined.cpp)
-target_link_libraries(${PROJECT_NAME}_affine3d Eigen3::Eigen)
+add_executable(${PROJECT_NAME}_affine3d_exe ${CMAKE_CURRENT_SOURCE_DIR}/src/affined.cpp)
+target_link_libraries(${PROJECT_NAME}_affine3d_exe Eigen3::Eigen)
+
+add_executable(${PROJECT_NAME}_interpolation_exe ${CMAKE_CURRENT_SOURCE_DIR}/src/interpolation.cpp)
+target_link_libraries(${PROJECT_NAME}_interpolation_exe Eigen3::Eigen)
