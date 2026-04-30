@@ -45,3 +45,6 @@ target_link_libraries(${PROJECT_NAME}_interpolation_exe Eigen3::Eigen)
 
 add_executable(${PROJECT_NAME}_inverse_exe ${CMAKE_CURRENT_SOURCE_DIR}/src/inverse.cpp)
 target_link_libraries(${PROJECT_NAME}_inverse_exe Eigen3::Eigen)
+
+add_executable(${PROJECT_NAME}_compensation_exe ${CMAKE_CURRENT_SOURCE_DIR}/src/compensation.cpp)
+target_link_libraries(${PROJECT_NAME}_compensation_exe Eigen3::Eigen)
