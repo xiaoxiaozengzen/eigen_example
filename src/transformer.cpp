@@ -28,7 +28,7 @@ void AngleAxisd_test() {
     std::cout << "Eigen::Vector3d::UnitZ() = " << Eigen::Vector3d::UnitZ().transpose() << std::endl;
     std::cout << "Eigen::Vector3d::UnitY() = " << Eigen::Vector3d::UnitY().transpose() << std::endl;
     std::cout << "Eigen::Vector3d::UnitX() = " << Eigen::Vector3d::UnitX().transpose() << std::endl;
-    Eigen::AngleAxisd rotation_vector1 (M_PI/2, Eigen::Vector3d(0, 0, 1)); //以（0,0,1）为旋转轴，旋转90度，右手定则
+    Eigen::AngleAxisd rotation_vector1(M_PI/2, Eigen::Vector3d(0, 0, 1)); //以（0,0,1）为旋转轴，旋转90度，右手定则
     Eigen::AngleAxisd rotation_vector2(M_PI/2, Eigen::Vector3d::UnitZ()); //以z轴为旋转轴，旋转90度，右手定则
     double angle = rotation_vector1.angle();
     std::cout << "rotation_vector1.agnle radian = " << angle << ", degree: " << angle * (180 / M_PI) << std::endl;
