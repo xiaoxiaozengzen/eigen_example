@@ -387,6 +387,41 @@ void test_calCenterPointFromKeyPoint() {
   std::cout << "center_point_4: " << center_point_4.transpose() << std::endl;
 }
 
+void matrix_multiply() {
+  Eigen::Matrix3d rotation_matrix;
+  rotation_matrix << 1, 2, 3,
+                     4, 5, 6,
+                     7, 8, 9;
+  Eigen::Vector3d translation_vector(1, 2, 3);
+  Eigen::Vector3d src_point(1, 1, 1);
+  Eigen::Vector4d src_point_homogeneous(src_point.x(), src_point.y(), src_point.z(), 1.0);
+
+  // 1. 使用齐次坐标进行变换
+  Eigen::Matrix4d transformation_matrix = Eigen::Matrix4d::Identity();
+  transformation_matrix.block<3, 3>(0, 0) = rotation_matrix;
+  transformation_matrix.block<3, 1>(0, 3) = translation_vector;
+  Eigen::Vector4d dst_point_homogeneous = transformation_matrix * src_point_homogeneous;
+  Eigen::Vector3d dst_point = dst_point_homogeneous.head<3>();
+  std::cout << "dst_point: " << dst_point.transpose() << std::endl;
+
+  // 2. 使用 R跟t
+  Eigen::Vector3d dst_point_2 = rotation_matrix * src_point + translation_vector;
+  std::cout << "dst_point_2: " << dst_point_2.transpose() << std::endl;
+
+  // 3. 展开计算
+  Eigen::Vector3d dst_point_3;
+  dst_point_3.x() = rotation_matrix(0, 0) * src_point.x() 
+                    + rotation_matrix(0, 1) * src_point.y()
+                    + rotation_matrix(0, 2) * src_point.z() + translation_vector.x();
+  dst_point_3.y() = rotation_matrix(1, 0) * src_point.x()
+                    + rotation_matrix(1, 1) * src_point.y()
+                    + rotation_matrix(1, 2) * src_point.z() + translation_vector.y();
+  dst_point_3.z() = rotation_matrix(2, 0) * src_point.x()
+                    + rotation_matrix(2, 1) * src_point.y()
+                    + rotation_matrix(2, 2) * src_point.z() + translation_vector.z();
+  std::cout << "dst_point_3: " << dst_point_3.transpose() << std::endl;
+}
+
 int main(int argc, char** argv) {
     Eigen::Matrix4d rfu2ins_matrix;
     GetRfu2Ins(&rfu2ins_matrix);
@@ -413,5 +448,9 @@ int main(int argc, char** argv) {
 
     std::cout << "=================calCenterPointFromKeyPoint===================" << std::endl;
     test_calCenterPointFromKeyPoint();
+
+    std::cout << "=================matrix_multiply===================" << std::endl;
+    matrix_multiply();
+
     return 0;
 }
